@@ -7,16 +7,18 @@ This document walks through the steps to add the [Top Techniques Calculator](htt
 ### Import the data sources to the model
 1. Download the following files: 
   * [Top Techniques Calculator Excel Workbook](https://github.com/center-for-threat-informed-defense/top-attack-techniques/raw/main/Calculator.xlsx)
-  * The most recent [MITRE ATT&CK Enteprise Dataset](https://github.com/mitre-attack/attack-stix-data/tree/master/enterprise-attack) (14.1 at time of writing)
+  * The STIX 2.1 representation of the [MITRE ATT&CK Enteprise Dataset](https://github.com/mitre-attack/attack-stix-data/tree/master/enterprise-attack) (14.1 at time of writing)
+  * The Excel workbook of the [MITRE ATT&CK Enterprise Dataset](https://attack.mitre.org/resources/attack-data-and-tools/)
   * [NIST SP 800-53r5 to ATT&CK 14.1 Mapping](https://raw.githubusercontent.com/center-for-threat-informed-defense/mappings-explorer/main/mappings/nist_800_53/attack-14.1/nist_800_53-rev5/enterprise/nist_800_53-rev5_attack-14.1-enterprise.json)
   * [AWS to ATT&CK 9.0 Mapping](https://raw.githubusercontent.com/center-for-threat-informed-defense/mappings-explorer/main/mappings/aws/attack-9.0/aws-09.21.2021/enterprise/aws-09.21.2021_attack-9.0-enterprise.json)
   * [Azure to ATT&CK 8.2 Mapping](https://raw.githubusercontent.com/center-for-threat-informed-defense/mappings-explorer/main/mappings/azure/attack-8.2/azure-06.29.2021/enterprise/azure-06.29.2021_attack-8.2-enterprise.json)
   * [GCP to ATT&CK 10 Mapping](https://raw.githubusercontent.com/center-for-threat-informed-defense/mappings-explorer/main/mappings/gcp/attack-10.0/gcp-06.28.2022/enterprise/gcp-06.28.2022_attack-10.0-enterprise.json)
   * [CIS Controls to ATT&CK 8.2 Mapping](https://www.cisecurity.org/-/media/project/cisecurity/cisecurity/data/media/files/uploads/2022/cis-controls-v8-to-enterprise-attck-v82-master-mapping--5262021.xlsx)
+  * [Cleaned up CIS Benchmark to ATT&CK Mapping](https://github.com/illusconsulting/ATTACK-Calculator-and-Mappings/blob/main/CIS%20Benchmark%20Mappings.xlsx)
 3. Import the Top Techniques Calculator data into the Power BI data model
   * The following columns must be added:
     * Technique (ID), Num. TID Before, Num. TID After, Prevalence Scores, Num. CAR, Num. Sigma, Num. ES SIEM, Num. Splunk, Num. CIS Controls, Num. 800-53 (r5),
-4. Import the ATT&CK Enterprise Dataset
+4. Import the STIX version of the ATT&CK Enterprise Dataset
   * The following steps were taken to import enterprise-attack-14.1.json in STIX 2.1 format
     * Expand the columns to display the values under objects.external_references. 
     * Filter the "objects.external_references" column to include only rows that begin with T and do not begin with TA.
@@ -28,11 +30,13 @@ This document walks through the steps to add the [Top Techniques Calculator](htt
         * objects.x_mitre_platforms
         * objects.x_mitre_domains
     * Filter the "objects.name" column to include only rows that do not end with "Mitigation"
-    
-5. Import the Top Techniques Calculator Workbook
+5. Import the Excel version of the ATT&CK Enterprise Dataset
+    * Import the Techniques table and use the first row as headers
+            
+6. Import the Top Techniques Calculator Workbook
     * Import the "Methodology" sheet and use the first row as headers
 
-6. Import the NIST 800-53r5, AWS, Azure, and GCP mappings. Make sure you can see the values in the following columns:
+7. Import the NIST 800-53r5, AWS, Azure, and GCP mappings. Make sure you can see the values in the following columns:
     * metadata.mapping_framework
     * mapping_objects.comments
     * mapping_objects.attack_object_id
@@ -41,7 +45,7 @@ This document walks through the steps to add the [Top Techniques Calculator](htt
     * mapping_objects.score_category
     * mapping_objects.score_value
 
-7. Import the CIS Controls to ATT&CK mapping
+8. Import the CIS Controls to ATT&CK mapping
     * Import the v8-ATT&CK Low Mit & (Sub-)Tech sheet and use the first row as headers
 
 ### Create the Sort Order Tables
@@ -83,23 +87,31 @@ hardware_coverage_table = DATATABLE("order", INTEGER, "weight", STRING, {{1,"Non
 
 ### Create the relationships
 Create the following relationships: 
-* enterprise-attack-14 1 (objects.external_references.external_id) to aws-09 21 2021_attack-9 0-enterprise (mapping_objects.attack_object_id)
+* techniques (ID) to aws-09 21 2021_attack-9 0-enterprise (mapping_objects.attack_object_id)
     * cardinality: many to many
     * cross filter direction: both
 
-* enterprise-attack-14 1 (objects.external_references.external_id) to azure-06 29 2021_attack-8 2-enterprise (mapping_objects.attack_object_id)
+* techniques (ID) to azure-06 29 2021_attack-8 2-enterprise (mapping_objects.attack_object_id)
     * cardinality: many to many
     * cross filter direction: both
 
-* enterprise-attack-14 1 (objects.external_references.external_id) to gcp-06 28 2022_attack-10 0-enterprise (mapping_objects.attack_object_id)
+* techniques (ID) to gcp-06 28 2022_attack-10 0-enterprise (mapping_objects.attack_object_id)
     * cardinality: many to many
     * cross filter direction: both
 
-* enterprise-attack-14 1 (objects.external_references.external_id) to nist_800_53-rev5_attack-14 1-enterprise (mapping_objects.attack_object_id)
+* techniques (ID) to nist_800_53-rev5_attack-14 1-enterprise (mapping_objects.attack_object_id)
     * cardinality: many to many
     * cross filter direction: both
+ 
+* enterprise-attack-14 1 (objects.external_references.external_id) to techniques (ID)
+    * cardinality: many to one
+    * cross filter direction: both
+ 
+* CIS Benchmark Mapping (MITRE ATT&CK Technique) to techniques (ID)
+    * cardinality: many to one
+    * cross filter direction: both
 
-* enterprise-attack-14 1 (objects.external_references.external_id) to v8-ATT&CK Low Mit & (Sub-)Tech (Combined ATT&CK (Sub-)Technique ID)
+* techniques (ID) to v8-ATT&CK Low Mit & (Sub-)Tech (Combined ATT&CK (Sub-)Technique ID)
     * cardinality: many to many
     * cross filter direction: both
 
@@ -114,9 +126,13 @@ Create the following relationships:
 * v8-ATT&CK Low Mit & (Sub-)Tech (Security Function) to security_function_sort_order_table(security function)
     * cardinality: many to one
     * cross filter direction: single
+ 
+* techniques (ID) to Top Techniques Calc Methodology(Technique (ID))
+    * cardinality: one to one
+    * cross filter direction: both
 
 ### Create the Unmodified Att&ck Score calculated column
-1. In the Table View, select the enterprise-attack-14-1 table.
+1. In the Table View, select the techniques table.
 2. In the Column tools tab of the ribbon menu, click New column
 3. Enter the following DAX expression: 
 ```
@@ -163,42 +179,42 @@ VAR ransomware_polynomial_w_countcount = ransomware_polynomial_w_countcount1 / (
 
 
 VAR before_utility = IF(
-    (RELATED('Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff) > 1,
+    (RELATED('Top Techniques Calc Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff) > 1,
     1,
-    IF((RELATED('Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff) < 0,
+    IF((RELATED('Top Techniques Calc Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff) < 0,
     0,
-    (RELATED('Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff)
+    (RELATED('Top Techniques Calc Methodology'[Num. TID Before]) - chokepoint_before_lower_cutoff)/(chokepoint_before_upper_cutoff - chokepoint_before_lower_cutoff)
     ))
 
 VAR after_utility = IF(
-    (RELATED('Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff) > 1,
+    (RELATED('Top Techniques Calc Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff) > 1,
     1,
-    IF((RELATED('Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff) < 0,
+    IF((RELATED('Top Techniques Calc Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff) < 0,
     0,
-    (RELATED('Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff)
+    (RELATED('Top Techniques Calc Methodology'[Num. TID After]) - chokepoint_after_lower_cutoff)/(chokepoint_after_upper_cutoff - chokepoint_after_lower_cutoff)
     ))
 
 VAR chokepoint_score = chokepoint_w_before * before_utility + chokepoint_w_after * after_utility
 
 VAR mitigations_utility = IF(
-    (((RELATED('Methodology'[Num. 800-53 (r5)]) + RELATED('Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff)) > 1,
+    (((RELATED('Top Techniques Calc Methodology'[Num. 800-53 (r5)]) + RELATED('Top Techniques Calc Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff)) > 1,
     1,
-    IF(((RELATED('Methodology'[Num. 800-53 (r5)]) + RELATED('Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff) < 0,
+    IF(((RELATED('Top Techniques Calc Methodology'[Num. 800-53 (r5)]) + RELATED('Top Techniques Calc Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff) < 0,
     0,
-    (((RELATED('Methodology'[Num. 800-53 (r5)]) + RELATED('Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff))
+    (((RELATED('Top Techniques Calc Methodology'[Num. 800-53 (r5)]) + RELATED('Top Techniques Calc Methodology'[Num. CIS Controls])) - actionability_mitigations_lower_cutoff) / (actionability_mitigations_upper_cutoff - actionability_mitigations_lower_cutoff))
     ))
 
 VAR detections_utility = IF(
-    ((RELATED('Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff)) > 1,
+    ((RELATED('Top Techniques Calc Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff)) > 1,
     1,
-    IF((RELATED('Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff) < 0,
+    IF((RELATED('Top Techniques Calc Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff) < 0,
     0,
-    ((RELATED('Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff))
+    ((RELATED('Top Techniques Calc Methodology'[Total Detections]) - actionability_detections_lower_cutoff) / (actionability_detections_upper_cutoff - actionability_detections_lower_cutoff))
     ))
 
 VAR actionability_score = actionability_w_miti * mitigations_utility + actionability_w_detect * detections_utility
 
-RETURN RELATED('Methodology'[Prevalence Scores]) + chokepoint_score + actionability_score
+RETURN RELATED('Top Techniques Calc Methodology'[Prevalence Scores]) + chokepoint_score + actionability_score
 ```
 
 ### Add the monitoring coverage slicers
@@ -211,18 +227,18 @@ RETURN RELATED('Methodology'[Prevalence Scores]) + chokepoint_score + actionabil
 2. In the Table tools tab of the ribbon menu, select New measure
 3. Enter the following DAX expression: 
 ```
-Total Top Score = 
+Calc Score = 
 SUMX(
-'enterprise-attack-14 1[1]',
+'techniques',
 VAR process_weight = 
 (IF(
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Process") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Command") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Script") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"WMI") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Module") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Pipe") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Service"),
+	CONTAINSSTRING([data sources],"Process") ||
+	CONTAINSSTRING([data sources],"Command") ||
+	CONTAINSSTRING([data sources],"Script") ||
+	CONTAINSSTRING([data sources],"WMI") ||
+	CONTAINSSTRING([data sources],"Module") ||
+	CONTAINSSTRING([data sources],"Pipe") ||
+	CONTAINSSTRING([data sources],"Service"),
 	(SWITCH(SELECTEDVALUE(process_coverage_table[weight], "None"),
 "None", 0.198,
 "Low", 0.132,
@@ -232,8 +248,8 @@ VAR process_weight =
 	0)) 
 VAR network_weight = 
 (IF(
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Network") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Firewall"),
+	CONTAINSSTRING([data sources],"Network") ||
+	CONTAINSSTRING([data sources],"Firewall"),
 	(SWITCH(SELECTEDVALUE(network_coverage_table[weight], "None"),
 "None", 0.198,
 "Low", 0.132,
@@ -243,14 +259,14 @@ VAR network_weight =
 	0)) 
 VAR file_weight = 
 (IF(
-	CONTAINSSTRING([objects.x_mitre_data_sources],"File") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Group") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Logon") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Schedule") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"User") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Registry") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Active") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Application"),
+	CONTAINSSTRING([data sources],"File") ||
+	CONTAINSSTRING([data sources],"Group") ||
+	CONTAINSSTRING([data sources],"Logon") ||
+	CONTAINSSTRING([data sources],"Schedule") ||
+	CONTAINSSTRING([data sources],"User") ||
+	CONTAINSSTRING([data sources],"Registry") ||
+	CONTAINSSTRING([data sources],"Active") ||
+	CONTAINSSTRING([data sources],"Application"),
 	SWITCH(SELECTEDVALUE(file_coverage_table[weight], "None"),
 "None", 0.198,
 "Low", 0.132,
@@ -260,14 +276,14 @@ VAR file_weight =
 	0))
 VAR cloud_weight = 
 (IF(
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Cloud") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Cluster") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Container") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Image") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Instance") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Pod") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Snapshot") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Volume"),
+	CONTAINSSTRING([data sources],"Cloud") ||
+	CONTAINSSTRING([data sources],"Cluster") ||
+	CONTAINSSTRING([data sources],"Container") ||
+	CONTAINSSTRING([data sources],"Image") ||
+	CONTAINSSTRING([data sources],"Instance") ||
+	CONTAINSSTRING([data sources],"Pod") ||
+	CONTAINSSTRING([data sources],"Snapshot") ||
+	CONTAINSSTRING([data sources],"Volume"),
 	SWITCH(SELECTEDVALUE(cloud_coverage_table[weight], "None"),
 "None", 0.198,
 "Low", 0.132,
@@ -277,10 +293,10 @@ VAR cloud_weight =
 	0))
 VAR hardware_weight = 
 (IF(
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Drive") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Firmware") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Host") ||
-	CONTAINSSTRING([objects.x_mitre_data_sources],"Kernel"),
+	CONTAINSSTRING([data sources],"Drive") ||
+	CONTAINSSTRING([data sources],"Firmware") ||
+	CONTAINSSTRING([data sources],"Host") ||
+	CONTAINSSTRING([data sources],"Kernel"),
 	SWITCH(SELECTEDVALUE(hardware_coverage_table[weight], "None"),
 "None", 0.198,
 "Low", 0.132,
